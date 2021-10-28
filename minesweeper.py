@@ -1,14 +1,10 @@
-# Arcade library tests
+#Minesweeper - Duncan Tasker
 
 import arcade
 from random import randint
 
 #Screen setup variables
 SCREEN_TITLE = "Minesweeper"
-
-#Sprite Scaling
-#CHARACTER_SCALING = 1
-TILE_SCALING = 0.5
 
 class MyGame(arcade.Window):
     #Main application Class
@@ -21,9 +17,7 @@ class MyGame(arcade.Window):
         
         #Lists to keep track of sprites
         self.wall_list = None
-        #self.player_list = None
-        
-        
+                
         self.X_SIZE = 0
         self.Y_SIZE = 0
         
@@ -44,7 +38,7 @@ class MyGame(arcade.Window):
         #Fill playspace with squares
         for i in range(0, self.Y_SIZE):
             for j in range(0, self.X_SIZE):
-                wall = arcade.Sprite(":resources:gui_basic_assets/window/grey_panel.png", TILE_SCALING)
+                wall = arcade.Sprite(":resources:gui_basic_assets/window/grey_panel.png", 0.5)
                 wall.center_x = (j * 50) + 25
                 wall.center_y = (i * 50) + 25
                 self.wall_list.append(wall)
@@ -146,9 +140,7 @@ class MyGame(arcade.Window):
                         mine_prox += mine_check(i+1,j-1)
                         mine_prox += mine_check(i-1,j-1)
                         self.playspace[i][j] = mine_prox
-                        
-                    #print(i, j, len(self.playspace), len(self.playspace[0]))
-            
+                                    
         
     def on_draw(self):
         #render the screen
@@ -156,15 +148,13 @@ class MyGame(arcade.Window):
         
         #code to draw screen goes here
         self.wall_list.draw()
-        flag_count_text = f" Flags: {self.flag_count}"
-        arcade.draw_text(flag_count_text, 10, ((self.Y_SIZE + 1) * 50) - 35, arcade.color.WHITE, 20)
-    
-        #self.player_list.draw()
         
+        #Drawing the flag counter in the top row
+        flag_count_text = f" Flags: {self.flag_count}"
+        arcade.draw_text(flag_count_text, 10, ((self.Y_SIZE + 1) * 50) - 35, arcade.color.WHITE, 20)        
         
     def on_mouse_press(self, _x, _y, _button, _modifiers):
         #handles mouse interactions with the playfield
-        print("click")
         
         #rounds mouse clicks to the nearest tile center
         myround = lambda x, y: y * round(x/y)
@@ -189,32 +179,38 @@ class MyGame(arcade.Window):
             #Right click actions 
             for idx, val in enumerate(self.wall_list):
                 if val.position == (corrected_x, corrected_y):
-                    #Add flag in if they are over 50
-                    print(self.playspace[corrected_x // 50][corrected_y // 50])
-                    if self.playspace[corrected_x // 50][corrected_y // 50] >= 0:
+                    #Add flag if selected position does not have flag (value > 0)
+                    if self.playspace[corrected_x // 50][corrected_y // 50] > 0:
+                        #multiply value by -1 to remove flag indication
                         self.playspace[corrected_x // 50][corrected_y // 50] *= -1
                         
+                        #replacing tile at position with flag
                         wall = arcade.Sprite(":resources:images/tiles/grass.png", 1, 0, 0, 48, 48)
                         wall.position = val.position
                         self.wall_list.remove(val)
                         self.wall_list.insert(idx, wall)
                         
+                        #increment flag count when removed
                         self.flag_count -= 1
                         
                     
-                    #remove flag
+                    #remove flag if selected position has flag already (value < 0)
                     elif self.playspace[corrected_x // 50][corrected_y // 50] < 0:
+                        #multiply value by -1 to indicate flag
                         self.playspace[corrected_x // 50][corrected_y // 50] *= -1
                         
+                        #replacing the flag with blank tile again
                         wall = arcade.Sprite(":resources:images/tiles/brickGrey.png", 1, 0, 0, 48, 48)
                         wall.position = val.position
                         self.wall_list.remove(val)
                         self.wall_list.insert(idx, wall)
                         
+                        #decrement flag count after flag is placed
                         self.flag_count += 1
         
     
 def main():
+    #difficulty selection screen before game is launched
     difficulty_selection_is_valid = False
     while difficulty_selection_is_valid == False:
         difficulty_selection = input("Select (E)asy, (M)edium, or (H)ard :: ")
@@ -241,9 +237,11 @@ def main():
         else:
             print("Please input E, M, or H for corrosponding difficulty level")
     
+    #defining screen dimensions based on difficulty (playspace size and amount of mines)
     SCREEN_WIDTH = X_SIZE * 50
     SCREEN_HEIGHT = (Y_SIZE + 1) * 50
     
+    #calling the arcade class to draw screen
     window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT)
     window.setup(X_SIZE, Y_SIZE, mine_amount)
     arcade.run()
