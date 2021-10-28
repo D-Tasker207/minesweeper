@@ -23,16 +23,21 @@ class MyGame(arcade.Window):
         self.wall_list = None
         #self.player_list = None
         
+        self.X_SIZE = 0
+        self.Y_SIZE = 0
         #Game variables
-        self.heatmap = []
         self.playspace = []
         self.flagsleft = 0
+        
     def setup(self, X_SIZE, Y_SIZE, mine_amount):
         #Set up game here, call function to restart game
         
         #Create Sprite Lists
         self.player_list = arcade.SpriteList()
         self.wall_list = arcade.SpriteList(use_spatial_hash=True)
+        
+        self.X_SIZE = X_SIZE
+        self.Y_SIZE = Y_SIZE
         
         #Fill playspace with squares
         for i in range(0, Y_SIZE):
@@ -46,39 +51,39 @@ class MyGame(arcade.Window):
         self.playspace = [[0 for i in range(Y_SIZE)]for j in range(X_SIZE)]
             
         #fill playspace with randomly placed mines
-        self.flagsleft = mine_amount
+        self.flag_count = mine_amount
         temp_mine_total = mine_amount
         while temp_mine_total > 0:
             mine_x = randint(0,X_SIZE - 1)
             mine_y =randint(0,Y_SIZE - 1)
             
-            if self.playspace[mine_x][mine_y] != "B":
-                self.playspace[mine_x][mine_y] = "B"
+            if self.playspace[mine_x][mine_y] != 100:
+                self.playspace[mine_x][mine_y] = 100
                 temp_mine_total -= 1
         
         #theres a better way to do this but its like 1am, i can't be bothered to think about it
-        mine_check = lambda x, y: 1 if self.playspace[x][y] == "B" else 0
-        for j in range(0,Y_SIZE):
-            for i in range(0,X_SIZE):
-                if (self.playspace[i][j] != "B"):
+        mine_check = lambda x, y: 1 if self.playspace[x][y] == 100 else 0
+        for j in range(0,self.Y_SIZE):
+            for i in range(0,self.X_SIZE):
+                if (self.playspace[i][j] != 100):
                     #only check the stuff below if the current space is not a bomb
                 
                     #top right corner
-                    if [i,j] == [X_SIZE - 1, Y_SIZE - 1]:
+                    if [i,j] == [self.X_SIZE - 1, self.Y_SIZE - 1]:
                         mine_prox = mine_check(i-1,j)
                         mine_prox += mine_check(i,j-1)
                         mine_prox += mine_check(i-1,j-1)
                         self.playspace[i][j] = mine_prox
             
                     #top left corner
-                    elif [i, j] == [0, Y_SIZE - 1]:
+                    elif [i, j] == [0, self.Y_SIZE - 1]:
                         mine_prox = mine_check(i+1,j)
                         mine_prox += mine_check(i,j-1)
                         mine_prox += mine_check(i+1,j-1)
                         self.playspace[i][j] = mine_prox
             
                     #bottom right corner
-                    elif [i, j] == [X_SIZE - 1, 0]:
+                    elif [i, j] == [self.X_SIZE - 1, 0]:
                         mine_prox = mine_check(i-1,j)
                         mine_prox += mine_check(i,j+1)
                         mine_prox += mine_check(i-1,j+1)
@@ -101,7 +106,7 @@ class MyGame(arcade.Window):
                         self.playspace[i][j] = mine_prox
             
                     #right edge
-                    elif i == X_SIZE - 1:
+                    elif i == self.X_SIZE - 1:
                         mine_prox = mine_check(i-1,j)
                         mine_prox += mine_check(i,j+1)
                         mine_prox += mine_check(i,j-1)
@@ -110,7 +115,7 @@ class MyGame(arcade.Window):
                         self.playspace[i][j] = mine_prox
             
                     #top edge
-                    elif j == Y_SIZE - 1:
+                    elif j == self.Y_SIZE - 1:
                         mine_prox = mine_check(i+1,j)
                         mine_prox += mine_check(i-1,j)
                         mine_prox += mine_check(i,j-1)
@@ -138,7 +143,8 @@ class MyGame(arcade.Window):
                         mine_prox += mine_check(i+1,j-1)
                         mine_prox += mine_check(i-1,j-1)
                         self.playspace[i][j] = mine_prox
-                    print(i, j, len(self.playspace), len(self.playspace[0]))
+                        
+                    #print(i, j, len(self.playspace), len(self.playspace[0]))
             
         
     def on_draw(self):
@@ -147,6 +153,9 @@ class MyGame(arcade.Window):
         
         #code to draw screen goes here
         self.wall_list.draw()
+        flag_count_text = f" Flags: {self.flag_count}"
+        arcade.draw_text(flag_count_text, 10, ((self.Y_SIZE + 1) * 50) - 35, arcade.color.WHITE, 20)
+    
         #self.player_list.draw()
         
         
@@ -173,10 +182,29 @@ class MyGame(arcade.Window):
             #Right click actions
             for i in self.wall_list:
                 if i.position == (corrected_x, corrected_y):
-                    wall = arcade.Sprite(":resources:images/tiles/grass.png", 1, 0, 0, 48, 48)
-                    wall.position = i.position
-                    self.wall_list.remove(i)
-                    self.wall_list.append(wall)
+                    #Add flag in if they are over 50
+                    print(self.playspace[corrected_x // 50][corrected_y // 50])
+                    if self.playspace[corrected_x // 50][corrected_y // 50] >= 0:
+                        self.playspace[corrected_x // 50][corrected_y // 50] *= -1
+                        
+                        wall = arcade.Sprite(":resources:images/tiles/grass.png", 1, 0, 0, 48, 48)
+                        wall.position = i.position
+                        self.wall_list.remove(i)
+                        self.wall_list.append(wall)
+                        
+                        self.flag_count -= 1
+                        
+                    
+                    #remove flag
+                    elif self.playspace[corrected_x // 50][corrected_y // 50] < 0:
+                        self.playspace[corrected_x // 50][corrected_y // 50] *= -1
+                        
+                        wall = arcade.Sprite(":resources:images/tiles/brickGrey.png", 1, 0, 0, 48, 48)
+                        wall.position = i.position
+                        self.wall_list.remove(i)
+                        self.wall_list.append(wall)
+                        
+                        self.flag_count += 1
     
 def main():
     difficulty_selection_is_valid = False
