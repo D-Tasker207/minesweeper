@@ -1,8 +1,7 @@
 # Arcade library tests
 
 import arcade
-import random
-import warnings
+from random import randint
 
 #Screen setup variables
 SCREEN_TITLE = "Minesweeper"
@@ -11,16 +10,12 @@ SCREEN_TITLE = "Minesweeper"
 #CHARACTER_SCALING = 1
 TILE_SCALING = 0.5
 
-warnings.filterwarnings("ignore")
-
 class MyGame(arcade.Window):
     #Main application Class
     
     def __init__(self, SCREEN_WIDTH, SCREEN_HEIGHT):
         #call parent class and set up window
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-        
-        print(SCREEN_WIDTH, SCREEN_HEIGHT)
         
         arcade.set_background_color([128, 128, 128])
         
@@ -49,23 +44,102 @@ class MyGame(arcade.Window):
                 
         #Set up arrays to store game data
         self.playspace = [[0 for i in range(Y_SIZE)]for j in range(X_SIZE)]
-        
-        print(self.playspace)
             
         #fill playspace with randomly placed mines
         self.flagsleft = mine_amount
         temp_mine_total = mine_amount
         while temp_mine_total > 0:
-            mine_x = random.randint(0,X_SIZE - 1)
-            mine_y = random.randint(0,Y_SIZE - 1)
-            
-            print(temp_mine_total, self.playspace[mine_x][mine_y], mine_x, mine_y)
+            mine_x = randint(0,X_SIZE - 1)
+            mine_y =randint(0,Y_SIZE - 1)
             
             if self.playspace[mine_x][mine_y] != "B":
                 self.playspace[mine_x][mine_y] = "B"
                 temp_mine_total -= 1
-                print(self.playspace)
         
+        #theres a better way to do this but its like 1am, i can't be bothered to think about it
+        mine_check = lambda x, y: 1 if self.playspace[x][y] == "B" else 0
+        for j in range(0,Y_SIZE):
+            for i in range(0,X_SIZE):
+                if (self.playspace[i][j] != "B"):
+                    #only check the stuff below if the current space is not a bomb
+                
+                    #top right corner
+                    if [i,j] == [X_SIZE - 1, Y_SIZE - 1]:
+                        mine_prox = mine_check(i-1,j)
+                        mine_prox += mine_check(i,j-1)
+                        mine_prox += mine_check(i-1,j-1)
+                        self.playspace[i][j] = mine_prox
+            
+                    #top left corner
+                    elif [i, j] == [0, Y_SIZE - 1]:
+                        mine_prox = mine_check(i+1,j)
+                        mine_prox += mine_check(i,j-1)
+                        mine_prox += mine_check(i+1,j-1)
+                        self.playspace[i][j] = mine_prox
+            
+                    #bottom right corner
+                    elif [i, j] == [X_SIZE - 1, 0]:
+                        mine_prox = mine_check(i-1,j)
+                        mine_prox += mine_check(i,j+1)
+                        mine_prox += mine_check(i-1,j+1)
+                        self.playspace[i][j] = mine_prox
+            
+                    #bottom left corner
+                    elif [i, j] == [0, 0]:
+                        mine_prox = mine_check(i+1,j)
+                        mine_prox += mine_check(i,j+1)
+                        mine_prox += mine_check(i+1,j+1)
+                        self.playspace[i][j] = mine_prox
+            
+                    #left edge
+                    elif i == 0:
+                        mine_prox = mine_check(i+1,j)
+                        mine_prox += mine_check(i,j+1)
+                        mine_prox += mine_check(i,j-1)
+                        mine_prox += mine_check(i+1,j+1)
+                        mine_prox += mine_check(i+1,j-1)
+                        self.playspace[i][j] = mine_prox
+            
+                    #right edge
+                    elif i == X_SIZE - 1:
+                        mine_prox = mine_check(i-1,j)
+                        mine_prox += mine_check(i,j+1)
+                        mine_prox += mine_check(i,j-1)
+                        mine_prox += mine_check(i-1,j+1)
+                        mine_prox += mine_check(i-1,j-1)
+                        self.playspace[i][j] = mine_prox
+            
+                    #top edge
+                    elif j == Y_SIZE - 1:
+                        mine_prox = mine_check(i+1,j)
+                        mine_prox += mine_check(i-1,j)
+                        mine_prox += mine_check(i,j-1)
+                        mine_prox += mine_check(i+1,j-1)
+                        mine_prox += mine_check(i-1,j-1)
+                        self.playspace[i][j] = mine_prox
+            
+                    #bottom edge
+                    elif j == 0:
+                        mine_prox = mine_check(i+1,j)
+                        mine_prox += mine_check(i-1,j)
+                        mine_prox += mine_check(i,j+1)
+                        mine_prox += mine_check(i+1,j+1)
+                        mine_prox += mine_check(i-1,j+1)
+                        self.playspace[i][j] = mine_prox
+                
+                    #central squares
+                    else:
+                        mine_prox = mine_check(i+1,j)
+                        mine_prox += mine_check(i-1,j)
+                        mine_prox += mine_check(i,j+1)
+                        mine_prox += mine_check(i,j-1)
+                        mine_prox += mine_check(i+1,j+1)
+                        mine_prox += mine_check(i-1,j+1)
+                        mine_prox += mine_check(i+1,j-1)
+                        mine_prox += mine_check(i-1,j-1)
+                        self.playspace[i][j] = mine_prox
+                    print(i, j, len(self.playspace), len(self.playspace[0]))
+            
         
     def on_draw(self):
         #render the screen
@@ -103,13 +177,8 @@ class MyGame(arcade.Window):
                     wall.position = i.position
                     self.wall_list.remove(i)
                     self.wall_list.append(wall)
-
-def testfunction():
-    print("hello world")
     
 def main():
-    
-    
     difficulty_selection_is_valid = False
     while difficulty_selection_is_valid == False:
         difficulty_selection = input("Select (E)asy, (M)edium, or (H)ard :: ")
