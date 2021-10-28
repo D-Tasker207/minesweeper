@@ -163,8 +163,10 @@ class MyGame(arcade.Window):
         
         if _button == 1:
             #Left click actions
+            #show tile value when clicked
             for idx, val in enumerate(self.wall_list):
                 if val.position == (corrected_x, corrected_y):
+                    #replace blank tile with tile with appropriate number
                     wall = arcade.Sprite(":resources:images/tiles/dirt.png", 1, 0, 0, 48, 48)
                     wall.position = val.position
                     self.wall_list.remove(val)
@@ -176,7 +178,8 @@ class MyGame(arcade.Window):
                         arcade.exit()
                     
         if _button == 4:
-            #Right click actions 
+            #Right click actions
+            #Add flag to current square. current flaw: cannot place flags on squares with value of 0 due to flag detection system
             for idx, val in enumerate(self.wall_list):
                 if val.position == (corrected_x, corrected_y):
                     #Add flag if selected position does not have flag (value > 0)
