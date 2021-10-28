@@ -62,6 +62,7 @@ class MyGame(arcade.Window):
                 temp_mine_total -= 1
         
         #theres a better way to do this but its like 1am, i can't be bothered to think about it
+        #it also only runs at the start of each game so it shouldn't be a that much of a problem
         mine_check = lambda x, y: 1 if self.playspace[x][y] == 100 else 0
         for j in range(0,self.Y_SIZE):
             for i in range(0,self.X_SIZE):
@@ -175,8 +176,7 @@ class MyGame(arcade.Window):
                     wall.position = i.position
                     self.wall_list.remove(i)
                     self.wall_list.append(wall)
-                    print(corrected_x // 50, corrected_y // 50)
-                    print(self.playspace[corrected_x // 50][corrected_y // 50])
+                    print(corrected_x // 50, corrected_y // 50, self.playspace[corrected_x // 50][corrected_y // 50])
                     
         if _button == 4:
             #Right click actions
