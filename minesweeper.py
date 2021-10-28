@@ -23,8 +23,10 @@ class MyGame(arcade.Window):
         self.wall_list = None
         #self.player_list = None
         
+        
         self.X_SIZE = 0
         self.Y_SIZE = 0
+        
         #Game variables
         self.playspace = []
         self.flagsleft = 0
@@ -40,22 +42,22 @@ class MyGame(arcade.Window):
         self.Y_SIZE = Y_SIZE
         
         #Fill playspace with squares
-        for i in range(0, Y_SIZE):
-            for j in range(0, X_SIZE):
+        for i in range(0, self.Y_SIZE):
+            for j in range(0, self.X_SIZE):
                 wall = arcade.Sprite(":resources:gui_basic_assets/window/grey_panel.png", TILE_SCALING)
                 wall.center_x = (j * 50) + 25
                 wall.center_y = (i * 50) + 25
                 self.wall_list.append(wall)
                 
         #Set up arrays to store game data
-        self.playspace = [[0 for i in range(Y_SIZE)]for j in range(X_SIZE)]
+        self.playspace = [[0 for i in range(self.Y_SIZE)]for j in range(self.X_SIZE)]
             
         #fill playspace with randomly placed mines
         self.flag_count = mine_amount
         temp_mine_total = mine_amount
         while temp_mine_total > 0:
-            mine_x = randint(0,X_SIZE - 1)
-            mine_y =randint(0,Y_SIZE - 1)
+            mine_x = randint(0,self.X_SIZE - 1)
+            mine_y =randint(0,self.Y_SIZE - 1)
             
             if self.playspace[mine_x][mine_y] != 100:
                 self.playspace[mine_x][mine_y] = 100
@@ -162,6 +164,7 @@ class MyGame(arcade.Window):
         
     def on_mouse_press(self, _x, _y, _button, _modifiers):
         #handles mouse interactions with the playfield
+        print("click")
         
         #rounds mouse clicks to the nearest tile center
         myround = lambda x, y: y * round(x/y)
@@ -170,27 +173,31 @@ class MyGame(arcade.Window):
         
         if _button == 1:
             #Left click actions
-            for i in self.wall_list:
-                if i.position == (corrected_x, corrected_y):
+            for idx, val in enumerate(self.wall_list):
+                if val.position == (corrected_x, corrected_y):
                     wall = arcade.Sprite(":resources:images/tiles/dirt.png", 1, 0, 0, 48, 48)
-                    wall.position = i.position
-                    self.wall_list.remove(i)
-                    self.wall_list.append(wall)
+                    wall.position = val.position
+                    self.wall_list.remove(val)
+                    self.wall_list.insert(idx, wall)
                     print(corrected_x // 50, corrected_y // 50, self.playspace[corrected_x // 50][corrected_y // 50])
                     
+                    if (self.playspace[corrected_x // 50][corrected_y // 50] == 100) or (self.playspace[corrected_x // 50][corrected_y // 50] == -100):
+                        print("Game Over")
+                        arcade.exit()
+                    
         if _button == 4:
-            #Right click actions
-            for i in self.wall_list:
-                if i.position == (corrected_x, corrected_y):
+            #Right click actions 
+            for idx, val in enumerate(self.wall_list):
+                if val.position == (corrected_x, corrected_y):
                     #Add flag in if they are over 50
                     print(self.playspace[corrected_x // 50][corrected_y // 50])
                     if self.playspace[corrected_x // 50][corrected_y // 50] >= 0:
                         self.playspace[corrected_x // 50][corrected_y // 50] *= -1
                         
                         wall = arcade.Sprite(":resources:images/tiles/grass.png", 1, 0, 0, 48, 48)
-                        wall.position = i.position
-                        self.wall_list.remove(i)
-                        self.wall_list.append(wall)
+                        wall.position = val.position
+                        self.wall_list.remove(val)
+                        self.wall_list.insert(idx, wall)
                         
                         self.flag_count -= 1
                         
@@ -200,11 +207,12 @@ class MyGame(arcade.Window):
                         self.playspace[corrected_x // 50][corrected_y // 50] *= -1
                         
                         wall = arcade.Sprite(":resources:images/tiles/brickGrey.png", 1, 0, 0, 48, 48)
-                        wall.position = i.position
-                        self.wall_list.remove(i)
-                        self.wall_list.append(wall)
+                        wall.position = val.position
+                        self.wall_list.remove(val)
+                        self.wall_list.insert(idx, wall)
                         
                         self.flag_count += 1
+        
     
 def main():
     difficulty_selection_is_valid = False
