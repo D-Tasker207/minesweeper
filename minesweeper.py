@@ -2,6 +2,7 @@
 
 import arcade
 from random import randint
+from time import sleep
 
 #Screen setup variables
 SCREEN_TITLE = "Minesweeper"
@@ -13,7 +14,7 @@ class MyGame(arcade.Window):
         #call parent class and set up window
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
         
-        arcade.set_background_color([128, 128, 128])
+        arcade.set_background_color([210,210,210])
         
         #Lists to keep track of sprites
         self.wall_list = None
@@ -35,10 +36,12 @@ class MyGame(arcade.Window):
         self.X_SIZE = X_SIZE
         self.Y_SIZE = Y_SIZE
         
+        self.mine_amount = mine_amount
+        
         #Fill playspace with squares
         for i in range(0, self.Y_SIZE):
             for j in range(0, self.X_SIZE):
-                wall = arcade.Sprite(":resources:gui_basic_assets/window/grey_panel.png", 0.5)
+                wall = arcade.Sprite("assets/blank.png")
                 wall.center_x = (j * 50) + 25
                 wall.center_y = (i * 50) + 25
                 self.wall_list.append(wall)
@@ -47,8 +50,8 @@ class MyGame(arcade.Window):
         self.playspace = [[0 for i in range(self.Y_SIZE)]for j in range(self.X_SIZE)]
             
         #fill playspace with randomly placed mines
-        self.flag_count = mine_amount
-        temp_mine_total = mine_amount
+        self.flag_count = self.mine_amount
+        temp_mine_total = self.mine_amount
         while temp_mine_total > 0:
             mine_x = randint(0,self.X_SIZE - 1)
             mine_y =randint(0,self.Y_SIZE - 1)
@@ -140,6 +143,8 @@ class MyGame(arcade.Window):
                         mine_prox += mine_check(i+1,j-1)
                         mine_prox += mine_check(i-1,j-1)
                         self.playspace[i][j] = mine_prox
+                        
+        self.allow_mouse_press = True
                                     
         
     def on_draw(self):
@@ -151,66 +156,105 @@ class MyGame(arcade.Window):
         
         #Drawing the flag counter in the top row
         flag_count_text = f" Flags: {self.flag_count}"
-        arcade.draw_text(flag_count_text, 10, ((self.Y_SIZE + 1) * 50) - 35, arcade.color.WHITE, 20)        
+        arcade.draw_text(flag_count_text, 10, ((self.Y_SIZE + 1) * 50) - 35, arcade.color.BLACK, 20)        
         
+    def my_round(self, rounding_val, factor):
+        rounded_val = factor * round(rounding_val/factor)
+        return rounded_val
+    
     def on_mouse_press(self, _x, _y, _button, _modifiers):
         #handles mouse interactions with the playfield
         
         #rounds mouse clicks to the nearest tile center
-        myround = lambda x, y: y * round(x/y)
-        corrected_x = myround(_x - 25, 50) + 25
-        corrected_y = myround(_y - 25, 50) + 25
-        
-        if _button == 1:
-            #Left click actions
-            #show tile value when clicked
-            for idx, val in enumerate(self.wall_list):
-                if val.position == (corrected_x, corrected_y):
-                    #replace blank tile with tile with appropriate number
-                    wall = arcade.Sprite(":resources:images/tiles/dirt.png", 1, 0, 0, 48, 48)
-                    wall.position = val.position
-                    self.wall_list.remove(val)
-                    self.wall_list.insert(idx, wall)
-                    print(corrected_x // 50, corrected_y // 50, self.playspace[corrected_x // 50][corrected_y // 50])
-                    
-                    if (self.playspace[corrected_x // 50][corrected_y // 50] == 100) or (self.playspace[corrected_x // 50][corrected_y // 50] == -100):
-                        print("Game Over")
-                        arcade.exit()
-                    
-        if _button == 4:
-            #Right click actions
-            #Add flag to current square. current flaw: cannot place flags on squares with value of 0 due to flag detection system
-            for idx, val in enumerate(self.wall_list):
-                if val.position == (corrected_x, corrected_y):
-                    #Add flag if selected position does not have flag (value > 0)
-                    if self.playspace[corrected_x // 50][corrected_y // 50] > 0:
-                        #multiply value by -1 to remove flag indication
-                        self.playspace[corrected_x // 50][corrected_y // 50] *= -1
+        corrected_x = self.my_round(_x - 25, 50) + 25
+        corrected_y = self.my_round(_y - 25, 50) + 25
+        if self.allow_mouse_press == True:
+            if _button == 1:
+                #Left click actions
+                #show tile value when clicked
+                for idx, val in enumerate(self.wall_list):
+                    if val.position == (corrected_x, corrected_y):
+                        #get value of tile, check if tile is mine, convert int to string
+                        tile_val = self.playspace[corrected_x // 50][corrected_y // 50]
                         
-                        #replacing tile at position with flag
-                        wall = arcade.Sprite(":resources:images/tiles/grass.png", 1, 0, 0, 48, 48)
+                        if tile_val == 100:
+                            tile_val = "mine"
+                        elif tile_val < 0:
+                            self.flag_count += 1
+                            tile_val = str(abs(tile_val))
+                            self.playspace[corrected_x // 50][corrected_y // 50] *= -1
+                        else:
+                            tile_val = str(tile_val)
+                        
+                        #replace blank tile with tile with appropriate number
+                        wall = arcade.Sprite("assets/"+tile_val+".png")
                         wall.position = val.position
                         self.wall_list.remove(val)
                         self.wall_list.insert(idx, wall)
+                        #print(corrected_x // 50, corrected_y // 50, self.playspace[corrected_x // 50][corrected_y // 50])
                         
-                        #increment flag count when removed
-                        self.flag_count -= 1
+                        if (self.playspace[corrected_x // 50][corrected_y // 50] == 100) or (self.playspace[corrected_x // 50][corrected_y // 50] == -100):
+                            self.game_over()
                         
-                    
-                    #remove flag if selected position has flag already (value < 0)
-                    elif self.playspace[corrected_x // 50][corrected_y // 50] < 0:
-                        #multiply value by -1 to indicate flag
-                        self.playspace[corrected_x // 50][corrected_y // 50] *= -1
+            if _button == 4:
+                #Right click actions
+                #Add flag to current square. current flaw: cannot place flags on squares with value of 0 due to flag detection system
+                for idx, val in enumerate(self.wall_list):
+                    if val.position == (corrected_x, corrected_y):
+                        #Add flag if selected position does not have flag (value > 0)
+                        if self.playspace[corrected_x // 50][corrected_y // 50] > 0:
+                            #multiply value by -1 to remove flag indication
+                            self.playspace[corrected_x // 50][corrected_y // 50] *= -1
+                            
+                            #replacing tile at position with flag
+                            wall = arcade.Sprite("assets/flagged.png")
+                            wall.position = val.position
+                            self.wall_list.remove(val)
+                            self.wall_list.insert(idx, wall)
+                            
+                            #increment flag count when removed
+                            self.flag_count -= 1
+                            
                         
-                        #replacing the flag with blank tile again
-                        wall = arcade.Sprite(":resources:images/tiles/brickGrey.png", 1, 0, 0, 48, 48)
-                        wall.position = val.position
-                        self.wall_list.remove(val)
-                        self.wall_list.insert(idx, wall)
+                        #remove flag if selected position has flag already (value < 0)
+                        elif self.playspace[corrected_x // 50][corrected_y // 50] < 0:
+                            #multiply value by -1 to indicate flag
+                            self.playspace[corrected_x // 50][corrected_y // 50] *= -1
+                            
+                            #replacing the flag with blank tile again
+                            wall = arcade.Sprite("assets/blank.png")
+                            wall.position = val.position
+                            self.wall_list.remove(val)
+                            self.wall_list.insert(idx, wall)
+                            
+                            #decrement flag count after flag is placed
+                            self.flag_count += 1
+                if self.flag_count == 0:
+                    self.win_check()
                         
-                        #decrement flag count after flag is placed
-                        self.flag_count += 1
+    def win_check(self):
+        flagged_mines = 0
+        for i in self.playspace:
+            for j in i:
+                if j == -100:
+                    flagged_mines += 1
+        if flagged_mines == self.mine_amount:
+            self.allow_mouse_press = False
+            print("You Win!")
+    
+    def game_over(self):
+        self.allow_mouse_press = False
+        for idx, val in enumerate(self.wall_list):
+            #reveal all mines
+            if self.playspace[val.center_x // 50][val.center_y // 50] == 100:
+                #replacing tile at position with flag
+                wall = arcade.Sprite("assets/mine.png")
+                wall.position = val.position
+                self.wall_list.remove(val)
+                self.wall_list.insert(idx, wall)
+        print("Game Over") 
         
+                        
     
 def main():
     #difficulty selection screen before game is launched
@@ -231,11 +275,6 @@ def main():
             X_SIZE = 30
             Y_SIZE = 16
             mine_amount = 99
-            difficulty_selection_is_valid = True
-        elif difficulty_selection == "T":
-            X_SIZE = 3
-            Y_SIZE = 3
-            mine_amount = 1
             difficulty_selection_is_valid = True
         else:
             print("Please input E, M, or H for corrosponding difficulty level")
