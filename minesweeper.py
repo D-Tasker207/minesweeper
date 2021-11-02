@@ -33,9 +33,11 @@ class MyGame(arcade.Window):
         self.player_list = arcade.SpriteList()
         self.wall_list = arcade.SpriteList(use_spatial_hash=True)
         
+        #set global variables for size to be used in drawing the flag counter on the top (probably better ways to do it but idk)
         self.X_SIZE = X_SIZE
         self.Y_SIZE = Y_SIZE
         
+        #set global variable for mine amount to be used in win check
         self.mine_amount = mine_amount
         
         #Fill playspace with squares
@@ -62,6 +64,7 @@ class MyGame(arcade.Window):
         
         #theres a better way to do this but its like 1am, i can't be bothered to think about it
         #it also only runs at the start of each game so it shouldn't be a that much of a problem
+        #basically just iterate through each square ot see what the mines immediately around it look like
         mine_check = lambda x, y: 1 if self.playspace[x][y] == 100 else 0
         for j in range(0,self.Y_SIZE):
             for i in range(0,self.X_SIZE):
@@ -159,6 +162,7 @@ class MyGame(arcade.Window):
         arcade.draw_text(flag_count_text, 10, ((self.Y_SIZE + 1) * 50) - 35, arcade.color.BLACK, 20)        
         
     def my_round(self, rounding_val, factor):
+        #rounds rounding_val to the nearest factor i.e rounds x coordinate to the nearest 50 pixels
         rounded_val = factor * round(rounding_val/factor)
         return rounded_val
     
@@ -168,6 +172,8 @@ class MyGame(arcade.Window):
         #rounds mouse clicks to the nearest tile center
         corrected_x = self.my_round(_x - 25, 50) + 25
         corrected_y = self.my_round(_y - 25, 50) + 25
+        
+        #checks to see if mouse clicks are permitted at this time
         if self.allow_mouse_press == True:
             if _button == 1:
                 #Left click actions
@@ -177,7 +183,10 @@ class MyGame(arcade.Window):
                         #get value of tile, check if tile is mine, convert int to string
                         tile_val = self.playspace[corrected_x // 50][corrected_y // 50]
                         
-                        if tile_val == 100:
+                        #if tile value is a mine set tile_val to "mine" for drawing the mine square
+                        #elif value has been flagged, increment the flag to account for its removal and remove flag in playspace array
+                        #else convert int value of  space to string
+                        if abs(tile_val) == 100:
                             tile_val = "mine"
                         elif tile_val < 0:
                             self.flag_count += 1
@@ -186,13 +195,13 @@ class MyGame(arcade.Window):
                         else:
                             tile_val = str(tile_val)
                         
-                        #replace blank tile with tile with appropriate number
+                        #replace blank tile with tile with appropriate number at same position
                         wall = arcade.Sprite("assets/"+tile_val+".png")
                         wall.position = val.position
                         self.wall_list.remove(val)
                         self.wall_list.insert(idx, wall)
-                        #print(corrected_x // 50, corrected_y // 50, self.playspace[corrected_x // 50][corrected_y // 50])
                         
+                        #if tile clicked is a bomb run game_over function
                         if (self.playspace[corrected_x // 50][corrected_y // 50] == 100) or (self.playspace[corrected_x // 50][corrected_y // 50] == -100):
                             self.game_over()
                         
@@ -203,18 +212,19 @@ class MyGame(arcade.Window):
                     if val.position == (corrected_x, corrected_y):
                         #Add flag if selected position does not have flag (value > 0)
                         if self.playspace[corrected_x // 50][corrected_y // 50] > 0:
-                            #multiply value by -1 to remove flag indication
-                            self.playspace[corrected_x // 50][corrected_y // 50] *= -1
-                            
-                            #replacing tile at position with flag
-                            wall = arcade.Sprite("assets/flagged.png")
-                            wall.position = val.position
-                            self.wall_list.remove(val)
-                            self.wall_list.insert(idx, wall)
-                            
-                            #increment flag count when removed
-                            self.flag_count -= 1
-                            
+                            #only allow flags to be placed if there are flags remaining
+                            if self.flag_count > 0:
+                                #multiply value by -1 to remove flag indication
+                                self.playspace[corrected_x // 50][corrected_y // 50] *= -1
+                                
+                                #replacing tile at position with flagged tile
+                                wall = arcade.Sprite("assets/flagged.png")
+                                wall.position = val.position
+                                self.wall_list.remove(val)
+                                self.wall_list.insert(idx, wall)
+                                
+                                #increment flag count when removed
+                                self.flag_count -= 1
                         
                         #remove flag if selected position has flag already (value < 0)
                         elif self.playspace[corrected_x // 50][corrected_y // 50] < 0:
@@ -229,20 +239,25 @@ class MyGame(arcade.Window):
                             
                             #decrement flag count after flag is placed
                             self.flag_count += 1
+                            
+                #if all flags have been placed run the win check function
                 if self.flag_count == 0:
                     self.win_check()
                         
     def win_check(self):
+        #iterate through playspace to see if the amount of unflagged mines = total mines
         flagged_mines = 0
         for i in self.playspace:
             for j in i:
                 if j == -100:
                     flagged_mines += 1
+                    
         if flagged_mines == self.mine_amount:
             self.allow_mouse_press = False
             print("You Win!")
     
     def game_over(self):
+        #iterate through playspace array and reveal bombs then print
         self.allow_mouse_press = False
         for idx, val in enumerate(self.wall_list):
             #reveal all mines
@@ -253,7 +268,6 @@ class MyGame(arcade.Window):
                 self.wall_list.remove(val)
                 self.wall_list.insert(idx, wall)
         print("Game Over") 
-        
                         
     
 def main():
