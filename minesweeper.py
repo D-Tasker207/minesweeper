@@ -30,7 +30,6 @@ class MyGame(arcade.Window):
         #Set up game here, call function to restart game
         
         #Create Sprite Lists
-        #self.player_list = arcade.SpriteList()
         self.tile_list = arcade.SpriteList(use_spatial_hash=True)
         
         #set global variables for size to be used in drawing the flag counter on the top (probably better ways to do it but idk)
@@ -200,7 +199,7 @@ class MyGame(arcade.Window):
         flagged_mines = 0
         for i in self.playspace:
             for j in i:
-                if j == -100:
+                if j[0] == 100 and j[1] == True:
                     flagged_mines += 1
                     
         if flagged_mines == self.mine_amount:
