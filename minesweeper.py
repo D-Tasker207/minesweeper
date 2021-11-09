@@ -3,24 +3,25 @@
 #import arcade for screen drawing routines and randint for mine placement
 import arcade
 from random import randint
+from time import sleep
 
 #Screen setup variables
 SCREEN_TITLE = "Minesweeper"
 
-class MyGame(arcade.Window):
+class GameView(arcade.View):
     #Main application Class
     
     def __init__(self, SCREEN_WIDTH, SCREEN_HEIGHT):
         #call parent class and set up window
-        super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+        super().__init__()
         
         arcade.set_background_color([210,210,210])
         
         #Lists to keep track of sprites
         self.tile_list = None
                 
-        self.X_SIZE = 0
-        self.Y_SIZE = 0
+        self.SCREEN_WIDTH = SCREEN_WIDTH
+        self.SCREEN_HEIGHT = SCREEN_HEIGHT
         
         #Game variables
         self.playspace = []
@@ -31,13 +32,12 @@ class MyGame(arcade.Window):
         
         #Create Sprite Lists
         self.tile_list = arcade.SpriteList(use_spatial_hash=True)
-        
-        #set global variables for size to be used in drawing the flag counter on the top (probably better ways to do it but idk)
+                
+        #set global variable for mine amount to be used in win check
+        self.mine_amount = mine_amount
         self.X_SIZE = X_SIZE
         self.Y_SIZE = Y_SIZE
         
-        #set global variable for mine amount to be used in win check
-        self.mine_amount = mine_amount
         
         #Fill playspace with squares
         for i in range(0, self.Y_SIZE):
@@ -86,7 +86,7 @@ class MyGame(arcade.Window):
         
         #Drawing the flag counter in the top row
         flag_count_text = f" Flags: {self.flag_count}"
-        arcade.draw_text(flag_count_text, 10, ((self.Y_SIZE + 1) * 50) - 35, arcade.color.BLACK, 20)        
+        arcade.draw_text(flag_count_text, 10, self.SCREEN_HEIGHT - 35, arcade.color.BLACK, 20)        
         
     def my_round(self, rounding_val, factor):
         #rounds rounding_val to the nearest factor i.e rounds x coordinate to the nearest 50 pixels
@@ -217,8 +217,29 @@ class MyGame(arcade.Window):
                 tile.position = val.position
                 self.tile_list.remove(val)
                 self.tile_list.insert(idx, tile)
-        print("Game Over") 
+        print("Game Over")
+        
+        #sleep(3)
+        
+        view = GameOverView(self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.window.show_view(view)
                         
+                        
+class GameOverView(arcade.View):
+    #Game Over screen view interaction code
+    def __init__(self, SCREEN_WIDTH, SCREEN_HEIGHT):
+        super().__init__()
+        self.texture = arcade.load_texture("assets/Game_Over.png")
+        
+        self.SCREEN_WIDTH = SCREEN_WIDTH
+        self.SCREEN_HEIGHT = SCREEN_HEIGHT
+    
+    def on_draw(self):
+        arcade.start_render()
+        self.texture.draw_sized(self.SCREEN_WIDTH / 2, self.SCREEN_HEIGHT / 2, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        
+    def on_mouse_press(self, _x, _y, _button, _modifier):
+        arcade.exit()
     
 def main():
     #difficulty selection screen before game is launched
@@ -248,8 +269,10 @@ def main():
     SCREEN_HEIGHT = (Y_SIZE + 1) * 50
     
     #calling the arcade class to draw screen
-    window = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT)
-    window.setup(X_SIZE, Y_SIZE, mine_amount)
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    start_view = GameView(SCREEN_WIDTH, SCREEN_HEIGHT)
+    window.show_view(start_view)
+    start_view.setup(X_SIZE, Y_SIZE, mine_amount)
     arcade.run()
 
 if __name__ == "__main__":
