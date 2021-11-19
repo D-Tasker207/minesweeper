@@ -2,8 +2,8 @@
 
 #import arcade for screen drawing routines and randint for mine placement
 import arcade
+import arcade.gui
 from random import randint
-from time import sleep
 
 #Screen setup variables
 SCREEN_TITLE = "Minesweeper"
@@ -19,9 +19,6 @@ class GameView(arcade.View):
         
         #Lists to keep track of sprites
         self.tile_list = None
-                
-        self.SCREEN_WIDTH = SCREEN_WIDTH
-        self.SCREEN_HEIGHT = SCREEN_HEIGHT
         
         #Game variables
         self.playspace = []
@@ -86,7 +83,7 @@ class GameView(arcade.View):
         
         #Drawing the flag counter in the top row
         flag_count_text = f" Flags: {self.flag_count}"
-        arcade.draw_text(flag_count_text, 10, self.SCREEN_HEIGHT - 35, arcade.color.BLACK, 20)        
+        arcade.draw_text(flag_count_text, 10, self.window.height - 35, arcade.color.BLACK, 20)        
         
     def my_round(self, rounding_val, factor):
         #rounds rounding_val to the nearest factor i.e rounds x coordinate to the nearest 50 pixels
@@ -125,7 +122,6 @@ class GameView(arcade.View):
                 #if tile value is a mine call game_over function
                 #elif value has been flagged, increment the flag to account for its removal and remove flag in playspace array
                 if tile_val[0] == 100:
-                    tile_val[0] = "mine"
                     self.game_over()
                     
                 elif tile_val[1] == True:
@@ -148,8 +144,6 @@ class GameView(arcade.View):
                     for r in range(max(0, (corrected_y // 50) - 1), min((corrected_y // 50) + 2, len(self.playspace[corrected_x // 50]))):
                         for c in range(max(0, (corrected_x // 50) - 1), min((corrected_x // 50) + 2, len(self.playspace))):
                             self.left_click((c * 50) + 25, (r * 50) + 25)
-                    
-            
                 
     def right_click(self, corrected_x, corrected_y):
         #Right click actions
@@ -217,62 +211,73 @@ class GameView(arcade.View):
                 tile.position = val.position
                 self.tile_list.remove(val)
                 self.tile_list.insert(idx, tile)
-        print("Game Over")
         
-        #sleep(3)
-        
-        view = GameOverView(self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
-        self.window.show_view(view)
-                        
-                        
-class GameOverView(arcade.View):
-    #Game Over screen view interaction code
-    def __init__(self, SCREEN_WIDTH, SCREEN_HEIGHT):
+class IntroView(arcade.View):
+    def __init__(self):
         super().__init__()
-        self.texture = arcade.load_texture("assets/Game_Over.png")
+        self.manager = arcade.gui.UIManager()
+        self.manager.enable()
         
-        self.SCREEN_WIDTH = SCREEN_WIDTH
-        self.SCREEN_HEIGHT = SCREEN_HEIGHT
+        #set background color
+        arcade.set_background_color(arcade.color.GRAY)
+        
+        #create ui manager for the three buttons
+        self.vbox = arcade.gui.UIBoxLayout()
+        
+        #add text widgit for button context
+        ui_text_label = arcade.gui.UITextArea(text="Select Difficulty Option", width=330,height=40,font_size=24, font_name="Roboto")
+        self.vbox.add(ui_text_label.with_space_around(bottom=20))
+        
+        #create three buttons to use with difficulty selection and add to the ui manager
+        easy_button = arcade.gui.UIFlatButton(text="Easy",width = 200)
+        self.vbox.add(easy_button.with_space_around(bottom=20))
+        
+        med_button = arcade.gui.UIFlatButton(text="Medium",width = 200)
+        self.vbox.add(med_button.with_space_around(bottom=20))
+        
+        hard_button = arcade.gui.UIFlatButton(text="Hard",width = 200)
+        self.vbox.add(hard_button.with_space_around(bottom=20))
+        
+        #bind button click actions to a helper function
+        easy_button.on_click = self.on_click_easy
+        med_button.on_click = self.on_click_med
+        hard_button.on_click = self.on_click_hard
+        
+        #bind ui manager to center x and y dimensions
+        self.manager.add(arcade.gui.UIAnchorWidget(anchor_x="center_x", anchor_y="center_y", child=self.vbox))
+                                
+    def on_click_easy(self, event):
+        self.start_game(8, 8, 10)
+        
+    def on_click_med(self, event):
+        self.start_game(16, 16, 40)
+        
+    def on_click_hard(self, event):
+        self.start_game(30, 16, 99)
+    
+    def start_game(self, x_size, y_size, mine_amount):
+        
+        #defining screen dimensions based on difficulty (playspace size and amount of mines)
+        SCREEN_WIDTH = x_size * 50
+        SCREEN_HEIGHT = (y_size + 1) * 50
+
+        #adjust screen size to match that of the playspace
+        self.window.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
+        start_view = GameView(SCREEN_WIDTH, SCREEN_HEIGHT)
+        start_view.setup(x_size, y_size, mine_amount)
+        self.window.show_view(start_view)
+        
     
     def on_draw(self):
+        #draw the buttons
         arcade.start_render()
-        self.texture.draw_sized(self.SCREEN_WIDTH / 2, self.SCREEN_HEIGHT / 2, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.manager.draw()
         
-    def on_mouse_press(self, _x, _y, _button, _modifier):
-        arcade.exit()
-    
 def main():
-    #difficulty selection screen before game is launched
-    difficulty_selection_is_valid = False
-    while difficulty_selection_is_valid == False:
-        difficulty_selection = input("Select (E)asy, (M)edium, or (H)ard :: ")
-        if difficulty_selection == "E":
-            X_SIZE = 8
-            Y_SIZE = 8
-            mine_amount = 10
-            difficulty_selection_is_valid = True
-        elif difficulty_selection == "M":
-            X_SIZE = 16
-            Y_SIZE = 16
-            mine_amount = 40
-            difficulty_selection_is_valid = True
-        elif difficulty_selection == "H":
-            X_SIZE = 30
-            Y_SIZE = 16
-            mine_amount = 99
-            difficulty_selection_is_valid = True
-        else:
-            print("Please input E, M, or H for corrosponding difficulty level")
-    
-    #defining screen dimensions based on difficulty (playspace size and amount of mines)
-    SCREEN_WIDTH = X_SIZE * 50
-    SCREEN_HEIGHT = (Y_SIZE + 1) * 50
-    
     #calling the arcade class to draw screen
-    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    start_view = GameView(SCREEN_WIDTH, SCREEN_HEIGHT)
+    window = arcade.Window(400, 450, "Select Difficulty")
+    start_view = IntroView()
     window.show_view(start_view)
-    start_view.setup(X_SIZE, Y_SIZE, mine_amount)
     arcade.run()
 
 if __name__ == "__main__":
