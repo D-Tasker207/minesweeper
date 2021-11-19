@@ -11,7 +11,7 @@ SCREEN_TITLE = "Minesweeper"
 class GameView(arcade.View):
     #Main application Class
     
-    def __init__(self, SCREEN_WIDTH, SCREEN_HEIGHT):
+    def __init__(self):
         #call parent class and set up window
         super().__init__()
         
@@ -263,7 +263,9 @@ class IntroView(arcade.View):
 
         #adjust screen size to match that of the playspace
         self.window.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
-        start_view = GameView(SCREEN_WIDTH, SCREEN_HEIGHT)
+        
+        #call code to start the main minesweeper playspace
+        start_view = GameView()
         start_view.setup(x_size, y_size, mine_amount)
         self.window.show_view(start_view)
         
@@ -274,7 +276,7 @@ class IntroView(arcade.View):
         self.manager.draw()
         
 def main():
-    #calling the arcade class to draw screen
+    #call the difficulty screen setups and run
     window = arcade.Window(400, 450, "Select Difficulty")
     start_view = IntroView()
     window.show_view(start_view)
