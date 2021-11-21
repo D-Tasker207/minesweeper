@@ -64,7 +64,6 @@ class GameView(arcade.View):
             for i in range(0,self.X_SIZE):
                 #only check the stuff below if the current space is not a bomb
                 if (self.playspace[i][j][0] != 100):
-                    
                     mine_prox = 0
                     for r in range(max(0,j-1), min(j+2, len(self.playspace[i]))):
                         for c in range(max(0,i-1), min(i+2, len(self.playspace))):
@@ -215,13 +214,15 @@ class GameView(arcade.View):
 class IntroView(arcade.View):
     def __init__(self):
         super().__init__()
+        
+        #create ui manager for buttons
         self.manager = arcade.gui.UIManager()
         self.manager.enable()
         
         #set background color
         arcade.set_background_color(arcade.color.GRAY)
         
-        #create ui manager for the three buttons
+        #create vbox to keep buttons centered on screen
         self.vbox = arcade.gui.UIBoxLayout()
         
         #add text widgit for button context
@@ -245,7 +246,8 @@ class IntroView(arcade.View):
         
         #bind ui manager to center x and y dimensions
         self.manager.add(arcade.gui.UIAnchorWidget(anchor_x="center_x", anchor_y="center_y", child=self.vbox))
-                                
+           
+    #button click methods call the setup function with different dimensions and mine amounts
     def on_click_easy(self, event):
         self.start_game(8, 8, 10)
         
