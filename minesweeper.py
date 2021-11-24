@@ -3,10 +3,12 @@
 #import arcade for screen drawing routines and randint for mine placement
 import arcade
 import arcade.gui
+import pyglet
 from random import randint
 
 #Screen setup variables
 SCREEN_TITLE = "Minesweeper"
+
 
 class GameView(arcade.View):
     #Main application Class
@@ -14,7 +16,7 @@ class GameView(arcade.View):
     def __init__(self):
         #call parent class and set up window
         super().__init__()
-        
+        self.center_on_screen()
         arcade.set_background_color([210,210,210])
         
         #Lists to keep track of sprites
@@ -30,6 +32,9 @@ class GameView(arcade.View):
         #Create Sprite Lists
         self.tile_list = arcade.SpriteList(use_spatial_hash=True)
                 
+        #create restart list of values for quick restarts
+        self.restart_values = (X_SIZE, Y_SIZE, mine_amount)
+        
         #set global variable for mine amount to be used in win check
         self.mine_amount = mine_amount
         self.X_SIZE = X_SIZE
@@ -91,7 +96,7 @@ class GameView(arcade.View):
     
     def on_mouse_press(self, _x, _y, _button, _modifiers):
         #handles mouse interactions with the playfield
-        
+                
         #rounds mouse clicks to the nearest tile center
         corrected_x = self.my_round(_x - 25, 50) + 25
         corrected_y = self.my_round(_y - 25, 50) + 25
@@ -99,10 +104,14 @@ class GameView(arcade.View):
         #checks to see if mouse clicks are permitted at this time
         if self.allow_mouse_press == True:
             #call appropriate function for click
-            if _button == 1:
+            if _button == 1 and _modifiers == 0:
                 self.left_click(corrected_x, corrected_y)
-            elif _button == 4:
+            elif _button == 4 or (_button == 1 and _modifiers == 512):
                 self.right_click(corrected_x, corrected_y)
+                
+        #quick restart by pressing shift left click
+        if _button == 1 and _modifiers == 1:
+            self.setup(self.restart_values[0], self.restart_values[1], self.restart_values[2])
     
     
     def left_click(self, corrected_x, corrected_y):
@@ -122,6 +131,7 @@ class GameView(arcade.View):
                 #elif value has been flagged, increment the flag to account for its removal and remove flag in playspace array
                 if tile_val[0] == 100:
                     self.game_over()
+                    return
                     
                 elif tile_val[1] == True:
                     self.flag_count += 1
@@ -210,6 +220,13 @@ class GameView(arcade.View):
                 tile.position = val.position
                 self.tile_list.remove(val)
                 self.tile_list.insert(idx, tile)
+                
+    def center_on_screen(self):
+        screen_dimensions = arcade.get_display_size()
+        """Centers the window on the screen."""
+        _left = screen_dimensions[0] // 2 - self.window.width // 2
+        _top = screen_dimensions[1] // 2 - self.window.height // 2
+        self.window.set_location(_left, _top)
         
 class IntroView(arcade.View):
     def __init__(self):
@@ -266,10 +283,14 @@ class IntroView(arcade.View):
         #adjust screen size to match that of the playspace
         self.window.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
         
+        #disable buttons
+        self.manager.disable()
+        
         #call code to start the main minesweeper playspace
         start_view = GameView()
         start_view.setup(x_size, y_size, mine_amount)
         self.window.show_view(start_view)
+        
         
     
     def on_draw(self):
@@ -278,6 +299,8 @@ class IntroView(arcade.View):
         self.manager.draw()
         
 def main():
+    print("Left click to reveal squares\nRight Click (two fingers) or Fn Key + Left Click to flag squares\nShift + Left Click to restart on same difficulty")
+    
     #call the difficulty screen setups and run
     window = arcade.Window(400, 450, "Select Difficulty")
     start_view = IntroView()
