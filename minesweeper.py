@@ -5,12 +5,8 @@ import arcade
 import arcade.gui
 from random import randint
 
-#Screen setup variables
-SCREEN_TITLE = "Minesweeper"
-
 class GameView(arcade.View):
     #Main application Class
-    
     def __init__(self):
         #call parent class and set up window
         super().__init__()
@@ -28,9 +24,9 @@ class GameView(arcade.View):
         #Set up game here, call function to restart game
         
         #Create Sprite Lists
-        self.tile_list = arcade.SpriteList(use_spatial_hash=True)
+        self.tile_list = arcade.SpriteList()
                 
-        #create restart list of values for quick restarts
+        #create restart tuple of values for quick restarts
         self.restart_values = (X_SIZE, Y_SIZE, mine_amount)
         
         #set global variable for mine amount to be used in win check
@@ -38,6 +34,7 @@ class GameView(arcade.View):
         self.X_SIZE = X_SIZE
         self.Y_SIZE = Y_SIZE
         
+        #create placeholder variable for win text
         self.winstate_text = ""
         
         #Fill playspace with squares
@@ -113,7 +110,6 @@ class GameView(arcade.View):
         #quick restart by pressing shift left click
         if _button == 1 and _modifiers == 1:
             self.setup(self.restart_values[0], self.restart_values[1], self.restart_values[2])
-    
     
     def left_click(self, corrected_x, corrected_y):
         #Left click actions
@@ -197,7 +193,7 @@ class GameView(arcade.View):
             #if all flags have been placed run the win check function
             if self.flag_count == 0:
                 self.win_check()
-                        
+
     def win_check(self):
         #iterate through playspace to see if the amount of unflagged mines = total mines
         flagged_mines = 0
@@ -205,12 +201,12 @@ class GameView(arcade.View):
             for j in i:
                 if j[0] == 100 and j[1] == True:
                     flagged_mines += 1
-                    
+
         if flagged_mines == self.mine_amount:
             self.allow_mouse_press = False
-            self.winstate_text = "YOU WIN"
-            
-    
+            self.winstate_text = " YOU WIN "
+            self.flag_count = ""
+
     def game_over(self):
         #iterate through playspace array and reveal bombs then print
         self.allow_mouse_press = False
@@ -223,6 +219,7 @@ class GameView(arcade.View):
                 self.tile_list.remove(val)
                 self.tile_list.insert(idx, tile)
         self.winstate_text = "GAME OVER"
+        self.flag_count = ""
                 
     def center_on_screen(self):
         #function centers the window on the screen
@@ -251,7 +248,7 @@ class IntroView(arcade.View):
         self.vbox.add(ui_text_label.with_space_around(bottom=5))
         
         #add subtitle to explain controls
-        text = "Left click to reveal squares\nRight Click (two fingers) or Ctrl + Left Click to flag squares\nShift + Left Click to restart"
+        text = "Left click to interact\nRight Click (two fingers) or Ctrl + Left Click to flag squares\nShift + Left Click to restart"
         ui_text_label = arcade.gui.UITextArea(text=text,width=370, height=110, font_size=18, font_name="Roboto", bold=True)
         self.vbox.add(ui_text_label.with_space_around(bottom=5))
         
