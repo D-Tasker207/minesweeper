@@ -3,12 +3,10 @@
 #import arcade for screen drawing routines and randint for mine placement
 import arcade
 import arcade.gui
-import pyglet
 from random import randint
 
 #Screen setup variables
 SCREEN_TITLE = "Minesweeper"
-
 
 class GameView(arcade.View):
     #Main application Class
@@ -40,6 +38,7 @@ class GameView(arcade.View):
         self.X_SIZE = X_SIZE
         self.Y_SIZE = Y_SIZE
         
+        self.winstate_text = ""
         
         #Fill playspace with squares
         for i in range(0, self.Y_SIZE):
@@ -87,7 +86,9 @@ class GameView(arcade.View):
         
         #Drawing the flag counter in the top row
         flag_count_text = f" Flags: {self.flag_count}"
-        arcade.draw_text(flag_count_text, 10, self.window.height - 35, arcade.color.BLACK, 20)        
+        arcade.draw_text(flag_count_text, 10, self.window.height - 35, arcade.color.BLACK, 20)
+        
+        arcade.draw_text(self.winstate_text, self.window.width // 2 - 75, self.window.height - 35, arcade.color.BLACK, 20)
         
     def my_round(self, rounding_val, factor):
         #rounds rounding_val to the nearest factor i.e rounds x coordinate to the nearest 50 pixels
@@ -96,7 +97,7 @@ class GameView(arcade.View):
     
     def on_mouse_press(self, _x, _y, _button, _modifiers):
         #handles mouse interactions with the playfield
-                
+
         #rounds mouse clicks to the nearest tile center
         corrected_x = self.my_round(_x - 25, 50) + 25
         corrected_y = self.my_round(_y - 25, 50) + 25
@@ -106,7 +107,7 @@ class GameView(arcade.View):
             #call appropriate function for click
             if _button == 1 and _modifiers == 0:
                 self.left_click(corrected_x, corrected_y)
-            elif _button == 4 or (_button == 1 and _modifiers == 512):
+            elif _button == 4 or (_button == 1 and _modifiers == 2):
                 self.right_click(corrected_x, corrected_y)
                 
         #quick restart by pressing shift left click
@@ -207,7 +208,8 @@ class GameView(arcade.View):
                     
         if flagged_mines == self.mine_amount:
             self.allow_mouse_press = False
-            print("You Win!")
+            self.winstate_text = "YOU WIN"
+            
     
     def game_over(self):
         #iterate through playspace array and reveal bombs then print
@@ -220,10 +222,12 @@ class GameView(arcade.View):
                 tile.position = val.position
                 self.tile_list.remove(val)
                 self.tile_list.insert(idx, tile)
+        self.winstate_text = "GAME OVER"
                 
     def center_on_screen(self):
+        #function centers the window on the screen
         screen_dimensions = arcade.get_display_size()
-        """Centers the window on the screen."""
+        
         _left = screen_dimensions[0] // 2 - self.window.width // 2
         _top = screen_dimensions[1] // 2 - self.window.height // 2
         self.window.set_location(_left, _top)
@@ -244,7 +248,12 @@ class IntroView(arcade.View):
         
         #add text widgit for button context
         ui_text_label = arcade.gui.UITextArea(text="Select Difficulty Option", width=330,height=40,font_size=24, font_name="Roboto")
-        self.vbox.add(ui_text_label.with_space_around(bottom=20))
+        self.vbox.add(ui_text_label.with_space_around(bottom=5))
+        
+        #add subtitle to explain controls
+        text = "Left click to reveal squares\nRight Click (two fingers) or Ctrl + Left Click to flag squares\nShift + Left Click to restart"
+        ui_text_label = arcade.gui.UITextArea(text=text,width=370, height=110, font_size=18, font_name="Roboto", bold=True)
+        self.vbox.add(ui_text_label.with_space_around(bottom=5))
         
         #create three buttons to use with difficulty selection and add to the ui manager
         easy_button = arcade.gui.UIFlatButton(text="Easy",width = 200)
@@ -291,18 +300,14 @@ class IntroView(arcade.View):
         start_view.setup(x_size, y_size, mine_amount)
         self.window.show_view(start_view)
         
-        
-    
     def on_draw(self):
         #draw the buttons
         arcade.start_render()
         self.manager.draw()
         
-def main():
-    print("Left click to reveal squares\nRight Click (two fingers) or Fn Key + Left Click to flag squares\nShift + Left Click to restart on same difficulty")
-    
+def main():    
     #call the difficulty screen setups and run
-    window = arcade.Window(400, 450, "Select Difficulty")
+    window = arcade.Window(400, 450, "MINESWEEPER")
     start_view = IntroView()
     window.show_view(start_view)
     arcade.run()
