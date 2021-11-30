@@ -97,9 +97,14 @@ class GameView(arcade.View):
         #used for escape key exit
         if key == arcade.key.ESCAPE:
             self.back_to_difficulty()
+        #quick restart by pressing R
+        elif key == arcade.key.R:
+            self.setup(self.restart_values[0], self.restart_values[1], self.restart_values[2])
+
             
     def back_to_difficulty(self):
-        self.window.set_size(400,450)
+        #reset view to the difficulty selection screen
+        self.window.set_size(400,500)
         self.center_on_screen()
         view = IntroView()
         self.window.show_view(view)
@@ -116,12 +121,9 @@ class GameView(arcade.View):
             #call appropriate function for left and right click
             if _button == 1 and _modifiers == 0:
                 self.left_click(corrected_x, corrected_y)
-            elif _button == 4 or (_button == 1 and _modifiers == 2):
+            elif _button == 1 and _modifiers == 2:
                 self.right_click(corrected_x, corrected_y)
                 
-        #quick restart by pressing shift left click
-        if _button == 1 and _modifiers == 1:
-            self.setup(self.restart_values[0], self.restart_values[1], self.restart_values[2])
     
     def left_click(self, corrected_x, corrected_y):
         #Left click actions
@@ -259,8 +261,8 @@ class IntroView(arcade.View):
         self.vbox.add(ui_text_label.with_space_around(bottom=5))
         
         #add subtitle to explain controls
-        text = "Left click to interact\nRight Click (two fingers) or Ctrl + Left Click to flag squares\nShift + Left Click to restart\nEscape to return to this screen"
-        ui_text_label = arcade.gui.UITextArea(text=text,width=370, height=130, font_size=18, font_name="Roboto", bold=True)
+        text = "Click to interact\nControl + Click to flag squares\nR to restart\nEscape to return to this screen"
+        ui_text_label = arcade.gui.UITextArea(text=text,width=370, height=110, font_size=18, font_name="Roboto", bold=True)
         self.vbox.add(ui_text_label.with_space_around(bottom=10))
         
         #create three buttons to use with difficulty selection and add to the ui manager
