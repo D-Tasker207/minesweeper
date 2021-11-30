@@ -93,6 +93,17 @@ class GameView(arcade.View):
         rounded_val = factor * round(rounding_val/factor)
         return rounded_val
     
+    def on_key_press(self, key, modifiers):
+        #used for escape key exit
+        if key == arcade.key.ESCAPE:
+            self.back_to_difficulty()
+            
+    def back_to_difficulty(self):
+        self.window.set_size(400,450)
+        self.center_on_screen()
+        view = IntroView()
+        self.window.show_view(view)
+    
     def on_mouse_press(self, _x, _y, _button, _modifiers):
         #handles mouse interactions with the playfield
 
@@ -133,7 +144,6 @@ class GameView(arcade.View):
                 elif tile_val["flag"] == True:
                     self.flag_count += 1
                     self.playspace[corrected_x // 50][corrected_y // 50]["flag"] = False
-                
                 
                 #replace blank tile with tile with appropriate number at same position in tile list
                 tile = arcade.Sprite("assets/"+str(tile_val["value"])+".png")
@@ -222,7 +232,7 @@ class GameView(arcade.View):
         #set winstate text and clear flag count to make room
         self.winstate_text = "GAME OVER"
         self.flag_count = ""
-                
+        
     def center_on_screen(self):
         #function centers the window on the screen
         screen_dimensions = arcade.get_display_size()
@@ -249,9 +259,9 @@ class IntroView(arcade.View):
         self.vbox.add(ui_text_label.with_space_around(bottom=5))
         
         #add subtitle to explain controls
-        text = "Left click to interact\nRight Click (two fingers) or Ctrl + Left Click to flag squares\nShift + Left Click to restart"
-        ui_text_label = arcade.gui.UITextArea(text=text,width=370, height=110, font_size=18, font_name="Roboto", bold=True)
-        self.vbox.add(ui_text_label.with_space_around(bottom=5))
+        text = "Left click to interact\nRight Click (two fingers) or Ctrl + Left Click to flag squares\nShift + Left Click to restart\nEscape to return to this screen"
+        ui_text_label = arcade.gui.UITextArea(text=text,width=370, height=130, font_size=18, font_name="Roboto", bold=True)
+        self.vbox.add(ui_text_label.with_space_around(bottom=10))
         
         #create three buttons to use with difficulty selection and add to the ui manager
         easy_button = arcade.gui.UIFlatButton(text="Easy",width = 200)
@@ -304,7 +314,7 @@ class IntroView(arcade.View):
         
 def main():    
     #call the difficulty screen setups and run
-    window = arcade.Window(400, 450, "MINESWEEPER")
+    window = arcade.Window(400, 500, "MINESWEEPER")
     start_view = IntroView()
     window.show_view(start_view)
     arcade.run()
