@@ -45,7 +45,7 @@ class GameView(arcade.View):
                 tile.center_y = (i * 50) + 25
                 self.tile_list.append(tile)
                 
-        #Set up arrays to store game data
+        #Set up array to store game data
         self.playspace = [[{"value":0, "flag":False, "click":False} for i in range(self.Y_SIZE)]for j in range(self.X_SIZE)]
             
         #fill playspace with randomly placed mines
@@ -100,7 +100,6 @@ class GameView(arcade.View):
         #quick restart by pressing R
         elif key == arcade.key.R:
             self.setup(self.restart_values[0], self.restart_values[1], self.restart_values[2])
-
             
     def back_to_difficulty(self):
         #reset view to the difficulty selection screen
@@ -123,8 +122,7 @@ class GameView(arcade.View):
                 self.left_click(corrected_x, corrected_y)
             elif _button == 1 and _modifiers == 2:
                 self.right_click(corrected_x, corrected_y)
-                
-    
+                    
     def left_click(self, corrected_x, corrected_y):
         #Left click actions
         #show tile value when clicked
@@ -200,7 +198,7 @@ class GameView(arcade.View):
                     
                     #decrement flag count after flag is placed
                     self.flag_count += 1
-                        
+                    
             #if all flags have been placed run the win check function
             if self.flag_count == 0:
                 self.win_check()
